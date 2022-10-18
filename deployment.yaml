@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mytcserverapp
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: mytcserverapp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mytcserverapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mytcserverapp
+  template:
+    metadata:
+      labels:
+        app: mytcserverapp
+    spec:
+      containers:
+      - name: mytcserverapp
+        image: ylevedervmware/vmware-pivotal-tcserver-demo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config-volume
+          mountPath: /instance-descriptor.yaml
+          subPath: tcserver-tomcat-sample-app-instance.yaml
+        env: 
+        - name: DB_PASSWORD 
+          valueFrom: 
+            secretKeyRef: 
+              name: db-pass 
+              key: DB_PASSWORD
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: config-volume
+        configMap:
+          name: tcserver-tomcat-sample-app-instance
+
